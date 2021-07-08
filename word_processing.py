@@ -33,6 +33,8 @@ def preprocess_tags():
         """
     )
     result = bqclient.query(query).to_dataframe()
+    result['rare_tag'] = result['asset_count'] <= 3
+    result['rare_tag'] = result['rare_tag'].astype(int)
     
     lemmatizer = WordNetLemmatizer()
     w_tokenizer = nltk.tokenize.WhitespaceTokenizer()
@@ -41,17 +43,32 @@ def preprocess_tags():
     result_np = result[['tag','language','auto_generated','organization_id','asset_count']].to_numpy()
     lemmatized = [word_preprocessing(i[0]) for i in result_np]
     lemma_df = pd.DataFrame(lemmatized, columns = ['lemmatized','tag']).set_index('tag')
-    
-    query = (
-        """
-        SELECT tag, cast(asset_id as string) as asset_id, 
-        auto_generated, 
-        cast(organization_id as string) as organization_id, 
-        source
-        FROM `w266-313317.final_project.raw_tags`
-        WHERE language = 'en'
-        """
+    lemma_df['lemma_string'] =  [" ".join(map(str, l)) for l in lemma_df['lemmatized']]
+    lemma_bq_df = lemma_df[['tag', 'lemma_string']].drop_duplicates()
+    lemma_bq_df = lemma_bq_df[lemma_bq_df.lemma_string.notnull() & lemma_bq_df.lemma_string.notna()]
+    join_lemma = lemma_bq_df.set_index('tag')
+    with_lemma = result.join(join_lemma, on='tag')
+    job_config = bigquery.LoadJobConfig(
+        # Specify a (partial) schema. All columns are always written to the
+        # table. The schema is used to assist in data type definitions.
+        schema=[
+            # Specify the type of columns whose type cannot be auto-detected. For
+            # example the "title" column uses pandas dtype "object", so its
+            # data type is ambiguous.
+            bigquery.SchemaField("tag", bigquery.enums.SqlTypeNames.STRING),
+            # Indexes are written if included in the schema by name.
+            bigquery.SchemaField("lemma_string", bigquery.enums.SqlTypeNames.STRING),
+        ],
+        # Optionally, set the write disposition. BigQuery appends loaded rows
+        # to an existing table by default, but with WRITE_TRUNCATE write
+        # disposition it replaces the table with the loaded data.
+        write_disposition="WRITE_TRUNCATE",
     )
-    full_tags = bqclient.query(query).to_dataframe()
+    table_id = "w266-313317.final_project.tag_asset_count_lemma"
+    job = bqclient.load_table_from_dataframe(
+        with_lemma, table_id, job_config=job_config
+    )  # Make an API request.
+    job.result()
+    print("table uploaded to bigquery at w266-313317.final_project.tag_asset_count_lemma")
     
     
