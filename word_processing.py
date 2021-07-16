@@ -18,8 +18,9 @@ bqclient = bigquery.Client()
 
 def word_preprocessing(word):
     lower = word.lower()
+    stripped = lower.strip()
     punct_replacer = str.maketrans(string.punctuation, ' '*len(string.punctuation))
-    rem_punct = lower.translate(punct_replacer)
+    rem_punct = stripped.translate(punct_replacer)
     lemma = [lemmatizer.lemmatize(w) for w in nltk.word_tokenize(rem_punct)]
     rem_stop = [w for w in lemma if not w in stop_words]
     rem_digits = [re.sub('\d', '<dig>', i) for i in rem_stop]
