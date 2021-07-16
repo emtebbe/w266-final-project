@@ -17,6 +17,10 @@ nltk.download('punkt')
 bqclient = bigquery.Client()
 
 def word_preprocessing(word):
+    lemmatizer = WordNetLemmatizer()
+    w_tokenizer = nltk.tokenize.WhitespaceTokenizer()
+    stop_words = set(stopwords.words('english'))
+    
     lower = word.lower()
     stripped = lower.strip()
     punct_replacer = str.maketrans(string.punctuation, ' '*len(string.punctuation))
@@ -37,14 +41,11 @@ def preprocess_tags():
     result['rare_tag'] = result['asset_count'] <= 3
     result['rare_tag'] = result['rare_tag'].astype(int)
     
-    lemmatizer = WordNetLemmatizer()
-    w_tokenizer = nltk.tokenize.WhitespaceTokenizer()
-    stop_words = set(stopwords.words('english'))
-    
     result_np = result[['tag','language','auto_generated','organization_id','asset_count']].to_numpy()
     lemmatized = [word_preprocessing(i[0]) for i in result_np]
-    lemma_df = pd.DataFrame(lemmatized, columns = ['lemmatized','tag']).set_index('tag')
+    lemma_df = pd.DataFrame(lemmatized, columns = ['lemmatized','tag'])
     lemma_df['lemma_string'] =  [" ".join(map(str, l)) for l in lemma_df['lemmatized']]
+
     lemma_bq_df = lemma_df[['tag', 'lemma_string']].drop_duplicates()
     lemma_bq_df = lemma_bq_df[lemma_bq_df.lemma_string.notnull() & lemma_bq_df.lemma_string.notna()]
     join_lemma = lemma_bq_df.set_index('tag')
