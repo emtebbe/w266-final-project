@@ -10,12 +10,8 @@ import pandas as pd
 bqclient = bigquery.Client()
 query = (
     """
-    SELECT asset_id, STRING_AGG(lemma_string) as cn 
-    FROM `w266-313114.final_project_clone.raw_tags` t1
-    INNER JOIN `w266-313114.final_project_clone.lemmatized_tags` t2
-    on t1.tag = t2.tag
-    WHERE lemma_string != ''
-    GROUP BY 1
+    SELECT * 
+    FROM `w266-313114.final_project_clone.reconstructed_assets`
     """
 )
 result = bqclient.query(query).to_dataframe()
