@@ -8,7 +8,7 @@ import random
 from gensim import models
 
 #Set Google Cloud bucket domain
-gcpd = 'w266-313317.final_project'
+gcpd = 'w266-313114.final_project_clone'
 # gcpd = 'w266-313317.final_project'
 bqclient = bigquery.Client()
 
@@ -17,12 +17,12 @@ bqclient = bigquery.Client()
 query = (
     """
     SELECT asset_id, STRING_AGG(lemma_string) as cn 
-    FROM `w266-313317.final_project.raw_tags` t1
+    FROM `{}.raw_tags` t1
     INNER JOIN `{}.lemmatized_tags` t2
     on t1.tag = t2.tag
     WHERE lemma_string != ''
     GROUP BY 1
-    """.format(gcpd)
+    """.format(gcpd, gcpd)
 )
 
 result = bqclient.query(query).to_dataframe()
