@@ -28,7 +28,7 @@ query = (
 result = bqclient.query(query).to_dataframe()
 
 #split each tag into a separate column, keeping up to 50 tags per asset
-expanded = result['cn'].str.split(',', 51, expand=True) 
+expanded = result['cn'].str.split(',', 51, expand=True).replace('bffulltakes ftp', '')
 expanded = expanded.drop([51], axis=1)
 
 result['asset_id'] = 'assetnum' + result['asset_id'].astype(str)
@@ -117,7 +117,7 @@ lm_query = (
 lm_result = bqclient.query(lm_query).to_dataframe()
 
 #split each tag into a separate column, keeping up to 50 tags per asset
-lm_expanded = lm_result['cn'].str.split(', ', 51, expand=True)
+lm_expanded = lm_result['cn'].str.split(', ', 51, expand=True).replace('BFfulltakes_FTP', '')
 lm_expanded = lm_expanded.drop([51], axis=1)
 # lm_expanded = lm_expanded.replace(r"^ +| +$", r"", regex=True, inplace=True)x
 
