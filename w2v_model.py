@@ -8,8 +8,8 @@ import random
 from gensim import models
 
 #Set Google Cloud bucket domain
-gcpd = 'w266-313114.final_project_clone'
-# gcpd = 'w266-313317.final_project'
+#gcpd = 'w266-313114.final_project_clone'
+gcpd = 'w266-313317.final_project'
 bqclient = bigquery.Client()
 
 
